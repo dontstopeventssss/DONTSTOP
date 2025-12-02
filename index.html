@@ -246,6 +246,17 @@
         .hidden {
             display: none;
         }
+
+        .list-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .list-label img {
+            height: 20px;
+            width: auto;
+        }
     </style>
 </head>
 <body>
@@ -284,10 +295,10 @@
                     <label for="list">Seleziona Lista *</label>
                     <select id="list" name="list" required>
                         <option value="">-- Scegli una lista --</option>
-                        <option value="DON'T STOP">DON'T STOP</option>
-                        <option value="UNIVERSITY PARTY">UNIVERSITY PARTY</option>
-                        <option value="MUSIC LAB">MUSIC LAB</option>
-                        <option value="FIREWORKS">FIREWORKS</option>
+                        <option value="DON'T STOP" data-logo="https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/stop.png">DON'T STOP</option>
+                        <option value="UNIVERSITY PARTY" data-logo="https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/univeristy%20party.jpeg">UNIVERSITY PARTY</option>
+                        <option value="MUSIC LAB" data-logo="https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/musiclab.png">MUSIC LAB</option>
+                        <option value="FIREWORKS" data-logo="https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/fireworks.PNG">FIREWORKS</option>
                         <option value="🌴 PALERMO SERATE">🌴 PALERMO SERATE</option>
                         <option value="💫 AURA">💫 AURA</option>
                         <option value="🎤 FEDE BARONE">🎤 FEDE BARONE</option>
@@ -337,14 +348,7 @@
         const registrationForm = document.getElementById('registrationForm');
         const registrationCard = document.getElementById('registrationCard');
         const ticketCard = document.getElementById('ticketCard');
-
-        // Mapping per i loghi da GitHub (con estensioni corrette)
-        const logoMap = {
-            'DON\'T STOP': 'https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/stop.png',
-            'UNIVERSITY PARTY': 'https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/univeristy-party.jpeg',
-            'MUSIC LAB': 'https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/musiclab.png',
-            'FIREWORKS': 'https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/fireworks.PNG'
-        };
+        const listSelect = document.getElementById('list');
 
         function generateTicketId() {
             return 'DONTOP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
