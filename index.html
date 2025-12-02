@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DON'T STOP - Iscrizione</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <title>DON'T STOP - Registrazione Evento</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --color-cream-50: rgba(252, 252, 249, 1);
@@ -13,16 +13,14 @@
             --color-slate-500: rgba(98, 108, 113, 1);
             --color-teal-500: rgba(33, 128, 141, 1);
             --color-teal-600: rgba(29, 116, 128, 1);
-            --color-teal-700: rgba(26, 104, 115, 1);
-            --color-orange-500: rgba(168, 75, 47, 1);
             --color-red-500: rgba(192, 21, 47, 1);
             --color-background: var(--color-cream-50);
             --color-surface: var(--color-cream-100);
             --color-text: var(--color-slate-900);
             --color-text-secondary: var(--color-slate-500);
             --color-primary: var(--color-teal-500);
-            --color-primary-hover: var(--color-teal-600);
-            --color-btn-primary-text: var(--color-cream-50);
+            --color-success: var(--color-teal-500);
+            --color-error: var(--color-red-500);
         }
 
         @media (prefers-color-scheme: dark) {
@@ -32,7 +30,8 @@
                 --color-text: rgba(245, 245, 245, 1);
                 --color-text-secondary: rgba(167, 169, 169, 0.7);
                 --color-primary: rgba(50, 184, 198, 1);
-                --color-primary-hover: rgba(45, 166, 178, 1);
+                --color-success: rgba(50, 184, 198, 1);
+                --color-error: rgba(255, 84, 89, 1);
             }
         }
 
@@ -49,169 +48,199 @@
         }
 
         body {
-            padding: 16px;
+            padding: 20px;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
         h1 {
             font-size: 2.5em;
-            margin: 32px 0 8px 0;
+            margin: 0 0 8px 0;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        h1 img {
+            height: 1.2em;
+            width: auto;
+            display: block;
         }
 
         .subtitle {
             text-align: center;
             color: var(--color-text-secondary);
             margin-bottom: 32px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .card {
             background-color: var(--color-surface);
             border-radius: 12px;
             border: 1px solid rgba(94, 82, 64, 0.12);
-            padding: 16px;
-            margin-bottom: 16px;
+            padding: 32px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            margin: 0 0 24px 0;
+            font-size: 20px;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
-        .form-label {
+        label {
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            font-size: 12px;
+            font-size: 14px;
         }
 
-        .form-control {
+        input, select {
             width: 100%;
-            padding: 8px 12px;
-            font-size: 14px;
+            padding: 10px 12px;
             border: 1px solid rgba(94, 82, 64, 0.2);
             border-radius: 8px;
-            background-color: var(--color-surface);
+            font-size: 14px;
+            background-color: var(--color-background);
             color: var(--color-text);
+            font-family: inherit;
         }
 
-        .form-control:focus {
-            outline: 2px solid var(--color-primary);
+        input:focus, select:focus {
+            outline: none;
             border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1);
         }
 
         .btn {
-            width: 100%;
-            padding: 12px 16px;
+            padding: 12px 24px;
             border-radius: 8px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            border: none;
             transition: all 150ms;
+            border: none;
+            width: 100%;
         }
 
         .btn-primary {
             background: var(--color-primary);
-            color: var(--color-btn-primary-text);
+            color: white;
         }
 
         .btn-primary:hover {
-            background: var(--color-primary-hover);
+            background: var(--color-teal-600);
         }
 
         .btn-secondary {
             background: rgba(94, 82, 64, 0.12);
             color: var(--color-text);
-            padding: 6px 12px;
-            font-size: 12px;
-            width: auto;
+            margin-top: 12px;
         }
 
         .btn-secondary:hover {
             background: rgba(94, 82, 64, 0.2);
         }
 
-        .warning-box {
-            background: rgba(168, 75, 47, 0.15);
-            border-left: 4px solid var(--color-orange-500);
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .warning-title {
-            font-weight: 600;
-            color: var(--color-orange-500);
-            margin-bottom: 8px;
-        }
-
-        .warning-text {
-            font-size: 14px;
-            color: var(--color-text);
-            line-height: 1.5;
-        }
-
-        .qr-container {
-            text-align: center;
-            padding: 16px;
-            background: white;
-            border-radius: 12px;
-            display: none;
-            margin-top: 16px;
-        }
-
-        .qr-container.show {
-            display: block;
-        }
-
-        .qr-container img {
-            max-width: 300px;
-            border-radius: 8px;
-        }
-
-        .ticket-info {
-            background: rgba(94, 82, 64, 0.12);
-            border-left: 4px solid var(--color-primary);
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-        }
-
-        .ticket-info h4 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
-        }
-
-        .ticket-info p {
-            margin: 0;
-            font-size: 12px;
-            color: var(--color-text-secondary);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
-
         .success-message {
-            background: rgba(33, 128, 141, 0.15);
-            border: 1px solid rgba(33, 128, 141, 0.3);
-            color: var(--color-primary);
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
             display: none;
+            background: rgba(33, 128, 141, 0.15);
+            border-left: 4px solid var(--color-success);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
         }
 
         .success-message.show {
             display: block;
+        }
+
+        .success-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .qr-container {
+            text-align: center;
+            margin: 24px 0;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .qr-info {
+            background: rgba(94, 82, 64, 0.06);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .qr-info strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid rgba(255, 193, 7, 1);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-list strong {
+            min-width: 60px;
         }
 
         .hidden {
@@ -221,173 +250,175 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎪 DON'T STOP</h1>
+        <h1>
+            <img src="https://raw.githubusercontent.com/dontstopeventssss/DONTSTOP/main/stop.png" alt="">
+            DON'T STOP
+        </h1>
         <p class="subtitle">Registrazione Evento</p>
 
-        <div class="card">
-            <h2 style="margin-top: 0;">Registrati a DON'T STOP</h2>
-            
+        <!-- FORM REGISTRAZIONE -->
+        <div class="card" id="registrationCard">
+            <h2>Registrati a DON'T STOP</h2>
+
             <div class="success-message" id="successMessage">
-                ✓ Iscrizione completata! Il tuo QR code è pronto.
+                <div class="success-title">✓ Iscrizione completata! Il tuo QR code è pronto.</div>
             </div>
 
-            <form id="registrationForm" onsubmit="handleRegistration(event)">
+            <form id="registrationForm">
                 <div class="form-group">
-                    <label class="form-label">Nome *</label>
-                    <input type="text" class="form-control" id="firstName" placeholder="Nome" required>
+                    <label for="firstName">Nome *</label>
+                    <input type="text" id="firstName" name="firstName" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Cognome *</label>
-                    <input type="text" class="form-control" id="lastName" placeholder="Cognome" required>
+                    <label for="lastName">Cognome *</label>
+                    <input type="text" id="lastName" name="lastName" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Email *</label>
-                    <input type="email" class="form-control" id="email" placeholder="email@example.com" required>
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Seleziona Lista *</label>
-                    <select class="form-control" id="selectedList" required>
+                    <label for="list">Seleziona Lista *</label>
+                    <select id="list" name="list" required>
                         <option value="">-- Scegli una lista --</option>
-                        <option value="DON'T STOP">🎪 DON'T STOP</option>
-                        <option value="UNIVERSITY PARTY">🎓 UNIVERSITY PARTY</option>
-                        <option value="MUSIC LAB">🎵 MUSIC LAB</option>
-                        <option value="FIREWORKS">✨ FIREWORKS</option>
-                        <option value="PALERMO SERATE">🌴 PALERMO SERATE</option>
-                        <option value="AURA">💫 AURA</option>
-                        <option value="FEDE BARONE">🎤 FEDE BARONE</option>
+                        <option value="🎪 DON'T STOP">🎪 DON'T STOP</option>
+                        <option value="🎓 UNIVERSITY PARTY">🎓 UNIVERSITY PARTY</option>
+                        <option value="🎵 MUSIC LAB">🎵 MUSIC LAB</option>
+                        <option value="✨ FIREWORKS">✨ FIREWORKS</option>
+                        <option value="🌴 PALERMO SERATE">🌴 PALERMO SERATE</option>
+                        <option value="💫 AURA">💫 AURA</option>
+                        <option value="🎤 FEDE BARONE">🎤 FEDE BARONE</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    Genera QR Code
-                </button>
+                <button type="submit" class="btn btn-primary">Genera QR Code</button>
             </form>
+
+            <div class="info-box">
+                <div class="info-title">⚠️ IMPORTANTE!</div>
+                <div class="info-title" style="font-size: 14px; margin: 0; font-weight: 400;">Salva il tuo QR code!</div>
+                <ul class="info-list">
+                    <li><strong>📥 Scaricarlo</strong> come immagine</li>
+                    <li><strong>📱 Fotografare</strong> lo schermo</li>
+                    <li><strong>📋 Copiare</strong> le informazioni</li>
+                </ul>
+                <div style="margin-top: 12px; color: var(--color-text); font-weight: 500;">Se lo perdi, non potrai entrare!</div>
+            </div>
         </div>
 
-        <div class="qr-container" id="qrContainer">
-            <div class="warning-box">
-                <div class="warning-title">⚠️ IMPORTANTE!</div>
-                <div class="warning-text">
-                    <strong>Salva il tuo QR code!</strong><br><br>
-                    Puoi:<br>
-                    • 📥 <strong>Scaricarlo</strong> come immagine<br>
-                    • 📱 <strong>Fotografare</strong> lo schermo<br>
-                    • 📋 <strong>Copiare</strong> le informazioni<br><br>
-                    <strong>Se lo perdi, non potrai entrare!</strong>
-                </div>
+        <!-- BIGLIETTO QR -->
+        <div class="card hidden" id="ticketCard">
+            <h2>Il Tuo Biglietto DON'T STOP</h2>
+            <p style="text-align: center; color: var(--color-text-secondary);">Conserva questo codice per l'ingresso</p>
+
+            <div class="qr-container">
+                <div id="qrcode"></div>
             </div>
 
-            <h3 style="margin-top: 16px;">Il Tuo Biglietto DON'T STOP</h3>
-            <p style="color: var(--color-text-secondary); font-size: 12px; margin-bottom: 12px;">Conserva questo codice per l'ingresso</p>
-            
-            <div id="qrCode" style="padding: 16px; background: white; border-radius: 8px; display: inline-block;"></div>
-
-            <div class="ticket-info" id="ticketInfo" style="margin-top: 16px;"></div>
-
-            <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="downloadQR()">📥 Scarica QR</button>
-                <button class="btn btn-secondary" onclick="copyTicketInfo()">📋 Copia Info</button>
-                <button class="btn btn-secondary" onclick="resetForm()">✏️ Nuova Iscrizione</button>
+            <div class="qr-info">
+                <strong id="ticketName">Nome Cognome</strong>
+                <strong>Email:</strong> <span id="ticketEmail">email@example.com</span>
+                <strong>Lista:</strong> <span id="ticketList">Lista</span>
             </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="downloadQR()">📥 Scarica QR</button>
+                <button class="btn btn-secondary" onclick="copyInfo()">📋 Copia Info</button>
+            </div>
+
+            <button class="btn btn-secondary" onclick="newRegistration()">✏️ Nuova Iscrizione</button>
         </div>
     </div>
 
     <script>
-        function initializeData() {
-            if (!window.participants) {
-                window.participants = JSON.parse(localStorage.getItem('participants')) || [];
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('participants', JSON.stringify(window.participants));
-        }
+        const registrationForm = document.getElementById('registrationForm');
+        const registrationCard = document.getElementById('registrationCard');
+        const ticketCard = document.getElementById('ticketCard');
 
         function generateTicketId() {
-            return 'TICKET-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            return 'DONTOP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         }
 
-        function handleRegistration(e) {
+        registrationForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const firstName = document.getElementById('firstName').value;
             const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('email').value;
-            const selectedList = document.getElementById('selectedList').value;
+            const list = document.getElementById('list').value;
+
+            if (!firstName || !lastName || !email || !list) {
+                alert('Per favore, compila tutti i campi');
+                return;
+            }
 
             const ticketId = generateTicketId();
-            const participant = {
+            const ticketData = {
                 ticketId: ticketId,
-                firstName: firstName,
-                lastName: lastName,
                 fullName: firstName + ' ' + lastName,
                 email: email,
-                list: selectedList,
-                registeredAt: new Date().toLocaleString('it-IT'),
-                checkedIn: false,
-                checkedInAt: null
+                list: list
             };
 
-            window.participants.push(participant);
-            saveData();
+            // Salva nel localStorage
+            let participants = JSON.parse(localStorage.getItem('participants')) || [];
+            participants.push({
+                ...ticketData,
+                checkedIn: false,
+                checkedInAt: null
+            });
+            localStorage.setItem('participants', JSON.stringify(participants));
 
-            generateQRCode(ticketId, participant);
+            // Mostra il biglietto
+            document.getElementById('ticketName').textContent = ticketData.fullName;
+            document.getElementById('ticketEmail').textContent = email;
+            document.getElementById('ticketList').textContent = list;
 
-            document.getElementById('successMessage').classList.add('show');
-            setTimeout(() => {
-                document.getElementById('successMessage').classList.remove('show');
-            }, 3000);
-        }
+            // Genera QR code
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: ticketId,
+                width: 256,
+                height: 256,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
-        function generateQRCode(ticketId, participant) {
-            const qrElement = document.getElementById('qrCode');
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(ticketId)}`;
-            
-            qrElement.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="border-radius: 8px;">`;
-            
-            const ticketInfo = document.getElementById('ticketInfo');
-            ticketInfo.innerHTML = `
-                <h4>Informazioni Biglietto</h4>
-                <p><strong>Ticket ID:</strong> ${ticketId}</p>
-                <p><strong>Nome:</strong> ${participant.fullName}</p>
-                <p><strong>Email:</strong> ${participant.email}</p>
-                <p><strong>Lista:</strong> ${participant.list}</p>
-                <p><strong>Registrato:</strong> ${participant.registeredAt}</p>
-            `;
-
-            document.getElementById('qrContainer').classList.add('show');
-            document.getElementById('registrationForm').style.display = 'none';
-        }
+            // Nascondi form e mostra biglietto
+            registrationCard.classList.add('hidden');
+            ticketCard.classList.remove('hidden');
+        });
 
         function downloadQR() {
-            const qrImage = document.querySelector('#qrCode img');
-            if (qrImage) {
+            const qrCanvas = document.querySelector('#qrcode canvas');
+            if (qrCanvas) {
                 const link = document.createElement('a');
-                link.href = qrImage.src;
-                link.download = 'qr-code-' + Date.now() + '.png';
+                link.download = 'dontstop-qrcode.png';
+                link.href = qrCanvas.toDataURL();
                 link.click();
             }
         }
 
-        function copyTicketInfo() {
-            const ticketInfo = document.getElementById('ticketInfo').innerText;
-            navigator.clipboard.writeText(ticketInfo).then(() => {
-                alert('Informazioni copiate negli appunti!');
+        function copyInfo() {
+            const name = document.getElementById('ticketName').textContent;
+            const email = document.getElementById('ticketEmail').textContent;
+            const list = document.getElementById('ticketList').textContent;
+            const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✓ Informazioni copiate negli appunti!');
             });
         }
 
-        function resetForm() {
-            document.getElementById('registrationForm').reset();
-            document.getElementById('registrationForm').style.display = 'block';
-            document.getElementById('qrContainer').classList.remove('show');
+        function newRegistration() {
+            registrationForm.reset();
+            registrationCard.classList.remove('hidden');
+            ticketCard.classList.add('hidden');
         }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initializeData();
-        });
     </script>
 </body>
 </html>
