@@ -429,12 +429,15 @@
 
             const ticketId = generateTicketId();
 
-            const registrationData = {
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                list: list
-            };
+                    const registrationData = {
+                        firstname: firstName,
+                        lastname: lastName,
+                        email: email,
+                        list: list,
+                        checkedin: false,
+                        checkedinat: null
+                    };
+
 
             try {
                 const { data, error } = await supabase
