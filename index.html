@@ -362,27 +362,12 @@
                         listSelect.appendChild(option);
                     });
                 } else {
-                    loadDefaultLists();
+                    listSelect.innerHTML = '<option value="">-- Nessuna lista disponibile --</option>';
                 }
             } catch (error) {
                 console.error('Errore caricamento liste:', error);
-                loadDefaultLists();
+                listSelect.innerHTML = '<option value="">-- Errore nel caricamento --</option>';
             }
-        }
-
-        function loadDefaultLists() {
-            const listSelect = document.getElementById('list');
-            listSelect.innerHTML = '<option value="">-- Scegli una lista --</option>';
-            DEFAULT_LISTS.forEach(listName => {
-                const option = document.createElement('option');
-                option.value = listName;
-                option.textContent = listName;
-                listSelect.appendChild(option);
-            });
-        }
-
-        function generateTicketId() {
-            return 'DONTSTOP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         }
 
         function generateQRCode(ticketId) {
@@ -417,17 +402,14 @@
                 return;
             }
 
-            const ticketId = generateTicketId();
-
-                    const registrationData = {
-                        firstname: firstName,
-                        lastname: lastName,
-                        email: email,
-                        list: list,
-                        checkedin: false,
-                        checkedinat: null
-                    };
-
+            const registrationData = {
+                firstname: firstName,
+                lastname: lastName,
+                email: email,
+                list: list,
+                checkedin: false,
+                checkedinat: null
+            };
 
             try {
                 const { data, error } = await supabase
