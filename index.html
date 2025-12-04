@@ -234,19 +234,6 @@
         .hidden {
             display: none;
         }
-
-        .success-message {
-            display: none;
-            background: rgba(33, 128, 141, 0.15);
-            border-left: 4px solid var(--color-success);
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-        }
-
-        .success-message.show {
-            display: block;
-        }
     </style>
 </head>
 <body>
@@ -315,7 +302,6 @@
                 <strong id="ticketName">Nome Cognome</strong>
                 <strong>Email:</strong> <span id="ticketEmail">email@example.com</span>
                 <strong>Lista:</strong> <span id="ticketList">Lista</span>
-                <strong>Registrato:</strong> <span id="ticketTime">--:--</span>
             </div>
 
             <div class="button-group">
@@ -336,24 +322,6 @@
         const registrationForm = document.getElementById('registrationForm');
         const registrationCard = document.getElementById('registrationCard');
         const ticketCard = document.getElementById('ticketCard');
-
-        // FUSO ORARIO ITALIANO
-        const TIMEZONE = 'Europe/Rome';
-
-        // Funzione per formattare l'orario con fuso orario italiano
-        function formatTimeInItalianTimezone() {
-            const date = new Date();
-            const formatter = new Intl.DateTimeFormat('it-IT', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: TIMEZONE
-            });
-            return formatter.format(date);
-        }
 
         // Carica liste
         async function loadLists() {
@@ -416,17 +384,11 @@
                 return;
             }
 
-            // ORARIO REGISTRAZIONE IN FORMATO ISO
-            const registrationTime = new Date().toISOString();
-            // ORARIO FORMATTATO CON FUSO ORARIO ITALIANO
-            const registrationTimeFormatted = formatTimeInItalianTimezone();
-
             const registrationData = {
                 firstname: firstName,
                 lastname: lastName,
                 email: email,
                 list: list,
-                registered_at: registrationTime,
                 checkedin: false,
                 checkedinat: null
             };
@@ -439,13 +401,11 @@
 
                 if (error) throw error;
 
-                console.log('✅ Registrazione salvata con orario:', registrationTime);
-                console.log('⏰ Orario formattato (fuso orario italiano):', registrationTimeFormatted);
+                console.log('✅ Registrazione salvata');
                 
                 document.getElementById('ticketName').textContent = firstName + ' ' + lastName;
                 document.getElementById('ticketEmail').textContent = email;
                 document.getElementById('ticketList').textContent = list;
-                document.getElementById('ticketTime').textContent = registrationTimeFormatted;
 
                 generateQRCode(email);
 
@@ -471,8 +431,7 @@
             const name = document.getElementById('ticketName').textContent;
             const email = document.getElementById('ticketEmail').textContent;
             const list = document.getElementById('ticketList').textContent;
-            const time = document.getElementById('ticketTime').textContent;
-            const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}\nRegistrato: ${time}`;
+            const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}`;
 
             navigator.clipboard.writeText(text).then(() => {
                 alert('✓ Informazioni copiate negli appunti!');
