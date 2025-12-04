@@ -136,6 +136,7 @@
             transition: all 150ms;
             border: none;
             width: 100%;
+            margin-top: 16px;
         }
 
         .btn-primary {
@@ -234,12 +235,6 @@
             display: none;
         }
 
-        .loading {
-            text-align: center;
-            color: var(--color-text-secondary);
-            margin: 16px 0;
-        }
-
         .success-message {
             display: none;
             background: rgba(33, 128, 141, 0.15);
@@ -265,10 +260,6 @@
         <div class="card" id="registrationCard">
             <h2>Registrati a DON'T STOP</h2>
 
-            <div class="success-message" id="successMessage">
-                <div class="info-title">✓ Iscrizione completata! Il tuo QR code è pronto.</div>
-            </div>
-
             <form id="registrationForm">
                 <div class="form-group">
                     <label for="firstName">Nome *</label>
@@ -290,6 +281,11 @@
                     <select id="list" required>
                         <option value="">-- Caricamento liste... --</option>
                     </select>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-title">⚠️ IMPORTANTE!</div>
+                    <div style="font-weight: 400; margin: 0;">Compila con i dati reali! Verranno controllati all'ingresso.</div>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Genera QR Code</button>
@@ -339,7 +335,6 @@
         const registrationForm = document.getElementById('registrationForm');
         const registrationCard = document.getElementById('registrationCard');
         const ticketCard = document.getElementById('ticketCard');
-
 
         // Carica liste
         async function loadLists() {
