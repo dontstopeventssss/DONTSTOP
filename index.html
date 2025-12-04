@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DON'T STOP - Registrazione Evento</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Firebase SDK - CORRETTO -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js?v=1"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     
     <style>
@@ -332,19 +331,10 @@
     </div>
 
     <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0xr80RFF0-gXPd4bhA0VV9TLBPOYW8ps",
-            authDomain: "app-ticket-evento.firebaseapp.com",
-            databaseURL: "https://app-ticket-evento-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "app-ticket-evento",
-            storageBucket: "app-ticket-evento.firebasestorage.app",
-            messagingSenderId: "182807045888",
-            appId: "1:182807045888:web:3bcea8e82192c5f61a75e5"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const SUPABASE_URL = 'https://ucnftwqplawdxbwlxjah.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_I7mKsvBQoyAwHm2c3eU3Rg_Mym3uCxI';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const registrationForm = document.getElementById('registrationForm');
         const registrationCard = document.getElementById('registrationCard');
@@ -352,47 +342,51 @@
 
         // Liste di default
         const DEFAULT_LISTS = [
-            { emoji: '🛑', name: "DON'T STOP" },
-            { emoji: '🎓', name: 'UNIVERSITY PARTY' },
-            { emoji: '🎵', name: 'MUSIC LAB' },
-            { emoji: '✨', name: 'FIREWORKS' },
-            { emoji: '🌴', name: 'PALERMO SERATE' },
-            { emoji: '💫', name: 'AURA' },
-            { emoji: '🎤', name: 'FEDE BARONE' }
+            'DON\'T STOP',
+            'UNIVERSITY PARTY',
+            'MUSIC LAB',
+            'FIREWORKS',
+            'PALERMO SERATE',
+            'AURA',
+            'FEDE BARONE'
         ];
 
         // Carica liste
-        function loadLists() {
+        async function loadLists() {
             const listSelect = document.getElementById('list');
             
-            database.ref('config/lists').on('value', (snapshot) => {
-                const lists = snapshot.val();
-                
-                if (lists && Object.keys(lists).length > 0) {
+            try {
+                const { data, error } = await supabase
+                    .from('lists')
+                    .select('name')
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
                     listSelect.innerHTML = '<option value="">-- Scegli una lista --</option>';
-                    Object.entries(lists).forEach(([key, list]) => {
+                    data.forEach(list => {
                         const option = document.createElement('option');
                         option.value = list.name;
-                        const emoji = list.emoji || '';
-                        option.textContent = emoji ? `${emoji} ${list.name}` : list.name;
+                        option.textContent = list.name;
                         listSelect.appendChild(option);
                     });
                 } else {
                     loadDefaultLists();
                 }
-            }).catch(error => {
+            } catch (error) {
                 console.error('Errore caricamento liste:', error);
                 loadDefaultLists();
-            });
+            }
         }
 
         function loadDefaultLists() {
             const listSelect = document.getElementById('list');
             listSelect.innerHTML = '<option value="">-- Scegli una lista --</option>';
-            DEFAULT_LISTS.forEach(list => {
+            DEFAULT_LISTS.forEach(listName => {
                 const option = document.createElement('option');
-                option.value = list.name;
-                option.textContent = `${list.emoji} ${list.name}`;
+                option.value = listName;
+                option.textContent = listName;
                 listSelect.appendChild(option);
             });
         }
@@ -420,7 +414,7 @@
             }
         }
 
-        registrationForm.addEventListener('submit', function(e) {
+        registrationForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const firstName = document.getElementById('firstName').value.trim();
@@ -434,37 +428,38 @@
             }
 
             const ticketId = generateTicketId();
-            const timestamp = new Date().toISOString();
 
             const registrationData = {
                 firstName: firstName,
                 lastName: lastName,
-                fullName: firstName + ' ' + lastName,
                 email: email,
                 list: list,
-                ticketId: ticketId,
-                registeredAt: timestamp,
                 checkedIn: false,
                 checkedInAt: null
             };
 
-            database.ref('registrations/' + ticketId).set(registrationData)
-                .then(() => {
-                    console.log('✅ Registrazione salvata');
-                    
-                    document.getElementById('ticketName').textContent = registrationData.fullName;
-                    document.getElementById('ticketEmail').textContent = email;
-                    document.getElementById('ticketList').textContent = list;
+            try {
+                const { data, error } = await supabase
+                    .from('registrations')
+                    .insert([registrationData])
+                    .select();
 
-                    generateQRCode(ticketId);
+                if (error) throw error;
 
-                    registrationCard.classList.add('hidden');
-                    ticketCard.classList.remove('hidden');
-                })
-                .catch(error => {
-                    console.error('Errore:', error);
-                    alert('❌ Errore durante la registrazione. Riprova.');
-                });
+                console.log('✅ Registrazione salvata');
+                
+                document.getElementById('ticketName').textContent = firstName + ' ' + lastName;
+                document.getElementById('ticketEmail').textContent = email;
+                document.getElementById('ticketList').textContent = list;
+
+                generateQRCode(email);
+
+                registrationCard.classList.add('hidden');
+                ticketCard.classList.remove('hidden');
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('❌ Errore durante la registrazione. Riprova.');
+            }
         });
 
         function downloadQR() {
