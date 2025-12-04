@@ -315,6 +315,7 @@
                 <strong id="ticketName">Nome Cognome</strong>
                 <strong>Email:</strong> <span id="ticketEmail">email@example.com</span>
                 <strong>Lista:</strong> <span id="ticketList">Lista</span>
+                <strong>Registrato:</strong> <span id="ticketTime">--:--</span>
             </div>
 
             <div class="button-group">
@@ -397,11 +398,16 @@
                 return;
             }
 
+            // ORARIO REGISTRAZIONE IN FORMATO ISO
+            const registrationTime = new Date().toISOString();
+            const registrationTimeFormatted = new Date(registrationTime).toLocaleString('it-IT');
+
             const registrationData = {
                 firstname: firstName,
                 lastname: lastName,
                 email: email,
                 list: list,
+                registered_at: registrationTime,
                 checkedin: false,
                 checkedinat: null
             };
@@ -414,11 +420,12 @@
 
                 if (error) throw error;
 
-                console.log('✅ Registrazione salvata');
+                console.log('✅ Registrazione salvata con orario:', registrationTime);
                 
                 document.getElementById('ticketName').textContent = firstName + ' ' + lastName;
                 document.getElementById('ticketEmail').textContent = email;
                 document.getElementById('ticketList').textContent = list;
+                document.getElementById('ticketTime').textContent = registrationTimeFormatted;
 
                 generateQRCode(email);
 
@@ -444,7 +451,8 @@
             const name = document.getElementById('ticketName').textContent;
             const email = document.getElementById('ticketEmail').textContent;
             const list = document.getElementById('ticketList').textContent;
-            const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}`;
+            const time = document.getElementById('ticketTime').textContent;
+            const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}\nRegistrato: ${time}`;
 
             navigator.clipboard.writeText(text).then(() => {
                 alert('✓ Informazioni copiate negli appunti!');
