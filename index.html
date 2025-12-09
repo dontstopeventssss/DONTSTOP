@@ -361,7 +361,8 @@
 
     <script>
         const SUPABASE_URL = 'https://ucnftwqplawdxbwlxjah.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_I7mKsvBQoyAwHm2c3eU3Rg_Mym3uCxI';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjbmZ0d3FwbGF3ZHhid2x4amFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4MDM2MDUsImV4cCI6MjA4MDM3OTYwNX0.qdsRKZH5j0pcxltSbC2TYck5axDq2RvQJgYKMRAqJiI';
+        const EDGE_FUNCTION_URL = 'https://ucnftwqplawdxbwlxjah.supabase.co/functions/v1/dynamic-api';
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -371,110 +372,23 @@
         let validLists = [];
         let userIpAddress = null;
 
-        // ========== OTTIENI INDIRIZZO IP CON API AFFIDABILE ==========
+        // Ottieni IP
         async function getUserIpAddress() {
             try {
-                console.log('🚀 Inizio cattura IP...');
-                
-                // Prova prima con ip-api.com (più veloce)
-                const response = await fetch('https://api.ipify.org?format=json', {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
+                const response = await fetch('https://api.ipify.org?format=json');
                 const data = await response.json();
                 userIpAddress = data.ip;
-                console.log('✅ IP Catturato: ' + userIpAddress);
-                
-            } catch (error1) {
-                console.warn('⚠️ ipify.org fallito, provo alternativa...', error1);
-                
-                try {
-                    // Fallback: prova con ip-api.com
-                    const response = await fetch('https://json.geoip.rs/');
-                    if (!response.ok) throw new Error('ip-api fallito');
-                    
-                    const data = await response.json();
-                    userIpAddress = data.IPv4 || data.ip || 'unknown';
-                    console.log('✅ IP Catturato (fallback): ' + userIpAddress);
-                    
-                } catch (error2) {
-                    console.error('❌ Entrambe le API fallite', error2);
-                    userIpAddress = 'unknown';
-                    console.log('⚠️ IP impostato a: unknown');
-                }
+                console.log('IP:', userIpAddress);
+            } catch (error) {
+                console.error('Errore IP:', error);
+                userIpAddress = 'unknown';
             }
         }
 
-        // Chiama la funzione al caricamento della pagina
         window.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 Pagina caricata - avvio getFunctionIP...');
             getUserIpAddress();
             loadLists();
         });
-
-        // ========== PROTEZIONI ANTI-BOT ==========
-        
-        // Traccia registrazioni recenti per rate limiting
-        const recentRegistrations = [];
-        const MAX_REGISTRATIONS_PER_MINUTE = 1;
-        let formInteractionTime = null;
-
-        function isRateLimited() {
-            const now = Date.now();
-            const oneMinuteAgo = now - 60000;
-            
-            while (recentRegistrations.length > 0 && recentRegistrations[0] < oneMinuteAgo) {
-                recentRegistrations.shift();
-            }
-            
-            return recentRegistrations.length >= MAX_REGISTRATIONS_PER_MINUTE;
-        }
-
-        function recordRegistration() {
-            recentRegistrations.push(Date.now());
-        }
-
-        // Rileva quando l'utente inizia a compilare il form
-        document.getElementById('firstName').addEventListener('focus', () => {
-            if (!formInteractionTime) {
-                formInteractionTime = Date.now();
-            }
-        });
-
-        function getFormCompilationTime() {
-            if (!formInteractionTime) return 0;
-            return (Date.now() - formInteractionTime) / 1000;
-        }
-
-        function isEmailPatternSuspicious(email) {
-            const pattern = /^[a-z]+\.[a-z]+@gmail\.com$/i;
-            return pattern.test(email);
-        }
-
-        function checkSpamPatterns(firstName, lastName, email) {
-            const suspiciousPatterns = [];
-            
-            if (isEmailPatternSuspicious(email)) {
-                suspiciousPatterns.push('email_pattern_suspicious');
-            }
-            
-            const compilationTime = getFormCompilationTime();
-            if (compilationTime < 1) {
-                suspiciousPatterns.push('too_fast_submission');
-            }
-            
-            const genericNames = ['Testa', 'Rossi', 'Bianchi', 'Russo', 'Ferrari'];
-            if (genericNames.includes(lastName)) {
-                suspiciousPatterns.push('generic_lastname');
-            }
-            
-            return suspiciousPatterns;
-        }
 
         // Carica liste
         async function loadLists() {
@@ -502,28 +416,21 @@
                     listSelect.innerHTML = '<option value="">-- Nessuna lista disponibile --</option>';
                 }
             } catch (error) {
-                console.error('Errore caricamento liste:', error);
-                listSelect.innerHTML = '<option value="">-- Errore nel caricamento --</option>';
+                console.error('Errore:', error);
             }
         }
 
         function generateQRCode(ticketId) {
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = '';
-
-            try {
-                new QRCode(qrContainer, {
-                    text: ticketId,
-                    width: 256,
-                    height: 256,
-                    colorDark: '#000000',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            } catch (e) {
-                console.error('Errore QR:', e);
-                qrContainer.innerHTML = '<div style="font-size: 48px; text-align: center;">🛑</div>';
-            }
+            new QRCode(qrContainer, {
+                text: ticketId,
+                width: 256,
+                height: 256,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
         }
 
         registrationForm.addEventListener('submit', async function(e) {
@@ -535,76 +442,57 @@
             const list = document.getElementById('list').value.trim();
             const submitBtn = document.getElementById('submitBtn');
 
-            console.log('📝 Inizio registrazione...');
-            console.log('IP attuale:', userIpAddress);
-
-            // RATE LIMITING
-            if (isRateLimited()) {
-                showError('⏳ Troppi tentativi! Aspetta 1 minuto prima di registrarti di nuovo.');
-                return;
-            }
-
-            // VALIDAZIONE BASE
             if (!firstName || !lastName || !email || !list) {
                 showError('Per favore, compila tutti i campi');
                 return;
             }
 
-            // Valida che lista sia ufficiale
             if (!validLists.includes(list)) {
-                showError('❌ Seleziona una lista valida dal dropdown!');
+                showError('Seleziona una lista valida');
                 return;
             }
 
-            // RILEVA PATTERN SPAM
-            const spamPatterns = checkSpamPatterns(firstName, lastName, email);
-            
-            // Se ALMENO 2 pattern sono veri → CAPTCHA è OBBLIGATORIO
-            if (spamPatterns.length >= 2) {
-                if (typeof grecaptcha !== 'undefined') {
-                    const recaptchaResponse = grecaptcha.getResponse();
-                    if (!recaptchaResponse) {
-                        showError('🔒 Verificazione CAPTCHA richiesta. Per favore, completa il CAPTCHA.');
-                        grecaptcha.reset();
-                        return;
-                    }
-                }
-            } else if (typeof grecaptcha !== 'undefined') {
-                // Anche per pattern normali, verifica il CAPTCHA
-                const recaptchaResponse = grecaptcha.getResponse();
-                if (!recaptchaResponse) {
-                    showError('❌ Per favore, completa il CAPTCHA');
-                    return;
-                }
+            // Verifica reCAPTCHA
+            if (typeof grecaptcha === 'undefined') {
+                showError('reCAPTCHA non caricato');
+                return;
             }
 
-            // DISABILITA BOTTONE PER EVITARE DOUBLE SUBMIT
+            const recaptchaResponse = grecaptcha.getResponse();
+            if (!recaptchaResponse) {
+                showError('Per favore, completa il CAPTCHA');
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ Registrazione in corso...';
 
-            const registrationData = {
-                firstname: firstName,
-                lastname: lastName,
-                email: email,
-                list: list,
-                ip_address: userIpAddress || 'unknown',
-                checkedin: false
-            };
-
-            console.log('📤 Inviando dati con IP:', registrationData.ip_address);
-
             try {
-                const { data, error } = await supabase
-                    .from('registrations')
-                    .insert([registrationData])
-                    .select();
+                // Invia all'Edge Function
+                const response = await fetch(EDGE_FUNCTION_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        firstname: firstName,
+                        lastname: lastName,
+                        email: email,
+                        list: list,
+                        recaptcha_token: recaptchaResponse,
+                        ip_address: userIpAddress || 'unknown'
+                    })
+                });
 
-                if (error) throw error;
+                const result = await response.json();
 
-                console.log('✅ Registrazione salvata con successo!');
-                console.log('📍 IP registrato:', userIpAddress);
-                recordRegistration();
-                
+                if (!result.success) {
+                    showError('❌ ' + result.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Genera QR Code';
+                    grecaptcha.reset();
+                    return;
+                }
+
+                // Successo
                 document.getElementById('ticketName').textContent = firstName + ' ' + lastName;
                 document.getElementById('ticketEmail').textContent = email;
                 document.getElementById('ticketList').textContent = list;
@@ -613,10 +501,10 @@
 
                 registrationCard.classList.add('hidden');
                 ticketCard.classList.remove('hidden');
-                showSuccess('✅ Registrazione completata! Conserva il tuo QR code.');
+                showSuccess('✅ Registrazione completata!');
             } catch (error) {
-                console.error('❌ Errore registrazione:', error);
-                showError('❌ Errore durante la registrazione. Riprova.');
+                console.error('Errore:', error);
+                showError('❌ Errore durante la registrazione');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Genera QR Code';
@@ -638,9 +526,8 @@
             const email = document.getElementById('ticketEmail').textContent;
             const list = document.getElementById('ticketList').textContent;
             const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}`;
-
             navigator.clipboard.writeText(text).then(() => {
-                showSuccess('✓ Informazioni copiate negli appunti!');
+                showSuccess('✓ Informazioni copiate!');
             });
         }
 
@@ -648,7 +535,6 @@
             registrationForm.reset();
             registrationCard.classList.remove('hidden');
             ticketCard.classList.add('hidden');
-            formInteractionTime = null;
             loadLists();
             if (typeof grecaptcha !== 'undefined') {
                 grecaptcha.reset();
