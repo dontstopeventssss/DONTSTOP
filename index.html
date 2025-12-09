@@ -7,8 +7,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- Supabase Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Google reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-    
     <style>
         :root {
             --color-cream-50: rgba(252, 252, 249, 1);
@@ -144,8 +145,13 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: var(--color-teal-600);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .btn-secondary {
@@ -234,6 +240,40 @@
         .hidden {
             display: none;
         }
+
+        .error-message {
+            background: rgba(192, 21, 47, 0.15);
+            border-left: 4px solid var(--color-error);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            color: var(--color-error);
+            display: none;
+            font-size: 14px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: rgba(33, 128, 141, 0.15);
+            border-left: 4px solid var(--color-success);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            color: var(--color-success);
+            display: none;
+            font-size: 14px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .g-recaptcha {
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -246,6 +286,9 @@
 
         <div class="card" id="registrationCard">
             <h2>Registrati a DON'T STOP</h2>
+
+            <div class="error-message" id="errorMsg"></div>
+            <div class="success-message" id="successMsg"></div>
 
             <form id="registrationForm">
                 <div class="form-group">
@@ -270,12 +313,15 @@
                     </select>
                 </div>
 
+                <!-- Google reCAPTCHA v2 -->
+                <div class="g-recaptcha" data-sitekey="6LfmcyYsAAAAAJRuq0Y0lWd0P7OtbMYJjIUEDyHl"></div>
+
                 <div class="info-box">
                     <div class="info-title">⚠️ IMPORTANTE!</div>
                     <div style="font-weight: 400; margin: 0;">Compila con i dati reali! Verranno controllati all'ingresso.</div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Genera QR Code</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Genera QR Code</button>
             </form>
 
             <div class="info-box">
@@ -322,6 +368,66 @@
         const registrationForm = document.getElementById('registrationForm');
         const registrationCard = document.getElementById('registrationCard');
         const ticketCard = document.getElementById('ticketCard');
+        let validLists = [];
+
+        // ========== PROTEZIONI ANTI-BOT ==========
+        
+        // Traccia registrazioni recenti per rate limiting
+        const recentRegistrations = [];
+        const MAX_REGISTRATIONS_PER_MINUTE = 1;
+        let formInteractionTime = null;
+
+        function isRateLimited() {
+            const now = Date.now();
+            const oneMinuteAgo = now - 60000;
+            
+            while (recentRegistrations.length > 0 && recentRegistrations[0] < oneMinuteAgo) {
+                recentRegistrations.shift();
+            }
+            
+            return recentRegistrations.length >= MAX_REGISTRATIONS_PER_MINUTE;
+        }
+
+        function recordRegistration() {
+            recentRegistrations.push(Date.now());
+        }
+
+        // Rileva quando l'utente inizia a compilare il form
+        document.getElementById('firstName').addEventListener('focus', () => {
+            if (!formInteractionTime) {
+                formInteractionTime = Date.now();
+            }
+        });
+
+        function getFormCompilationTime() {
+            if (!formInteractionTime) return 0;
+            return (Date.now() - formInteractionTime) / 1000;
+        }
+
+        function isEmailPatternSuspicious(email) {
+            const pattern = /^[a-z]+\.[a-z]+@gmail\.com$/i;
+            return pattern.test(email);
+        }
+
+        function checkSpamPatterns(firstName, lastName, email) {
+            const suspiciousPatterns = [];
+            
+            if (isEmailPatternSuspicious(email)) {
+                suspiciousPatterns.push('email_pattern_suspicious');
+            }
+            
+            const compilationTime = getFormCompilationTime();
+            if (compilationTime < 1) {
+                suspiciousPatterns.push('too_fast_submission');
+            }
+            
+            const genericNames = ['Testa', 'Rossi', 'Bianchi', 'Russo', 'Ferrari'];
+            if (genericNames.includes(lastName)) {
+                suspiciousPatterns.push('generic_lastname');
+            }
+            
+            return suspiciousPatterns;
+        }
 
         // Carica liste
         async function loadLists() {
@@ -336,6 +442,7 @@
                 if (error) throw error;
 
                 if (data && data.length > 0) {
+                    validLists = data.map(l => l.name);
                     listSelect.innerHTML = '<option value="">-- Scegli una lista --</option>';
                     data.forEach(list => {
                         const option = document.createElement('option');
@@ -378,11 +485,51 @@
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
             const list = document.getElementById('list').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
 
-            if (!firstName || !lastName || !email || !list) {
-                alert('Per favore, compila tutti i campi');
+            // RATE LIMITING
+            if (isRateLimited()) {
+                showError('⏳ Troppi tentativi! Aspetta 1 minuto prima di registrarti di nuovo.');
                 return;
             }
+
+            // VALIDAZIONE BASE
+            if (!firstName || !lastName || !email || !list) {
+                showError('Per favore, compila tutti i campi');
+                return;
+            }
+
+            // Valida che lista sia ufficiale
+            if (!validLists.includes(list)) {
+                showError('❌ Seleziona una lista valida dal dropdown!');
+                return;
+            }
+
+            // RILEVA PATTERN SPAM
+            const spamPatterns = checkSpamPatterns(firstName, lastName, email);
+            
+            // Se ALMENO 2 pattern sono veri → CAPTCHA è OBBLIGATORIO
+            if (spamPatterns.length >= 2) {
+                if (typeof grecaptcha !== 'undefined') {
+                    const recaptchaResponse = grecaptcha.getResponse();
+                    if (!recaptchaResponse) {
+                        showError('🔒 Verificazione CAPTCHA richiesta. Per favore, completa il CAPTCHA.');
+                        grecaptcha.reset();
+                        return;
+                    }
+                }
+            } else if (typeof grecaptcha !== 'undefined') {
+                // Anche per pattern normali, verifica il CAPTCHA
+                const recaptchaResponse = grecaptcha.getResponse();
+                if (!recaptchaResponse) {
+                    showError('❌ Per favore, completa il CAPTCHA');
+                    return;
+                }
+            }
+
+            // DISABILITA BOTTONE PER EVITARE DOUBLE SUBMIT
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Registrazione in corso...';
 
             const registrationData = {
                 firstname: firstName,
@@ -401,6 +548,7 @@
                 if (error) throw error;
 
                 console.log('✅ Registrazione salvata');
+                recordRegistration();
                 
                 document.getElementById('ticketName').textContent = firstName + ' ' + lastName;
                 document.getElementById('ticketEmail').textContent = email;
@@ -410,9 +558,13 @@
 
                 registrationCard.classList.add('hidden');
                 ticketCard.classList.remove('hidden');
+                showSuccess('✅ Registrazione completata! Conserva il tuo QR code.');
             } catch (error) {
                 console.error('Errore:', error);
-                alert('❌ Errore durante la registrazione. Riprova.');
+                showError('❌ Errore durante la registrazione. Riprova.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Genera QR Code';
             }
         });
 
@@ -433,7 +585,7 @@
             const text = `DON'T STOP\n${name}\nEmail: ${email}\nLista: ${list}`;
 
             navigator.clipboard.writeText(text).then(() => {
-                alert('✓ Informazioni copiate negli appunti!');
+                showSuccess('✓ Informazioni copiate negli appunti!');
             });
         }
 
@@ -441,7 +593,25 @@
             registrationForm.reset();
             registrationCard.classList.remove('hidden');
             ticketCard.classList.add('hidden');
+            formInteractionTime = null;
             loadLists();
+            if (typeof grecaptcha !== 'undefined') {
+                grecaptcha.reset();
+            }
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('successMsg');
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 5000);
         }
 
         // Carica liste al caricamento
