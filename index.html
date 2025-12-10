@@ -420,6 +420,31 @@
             }
         }
 
+        // RATE LIMITING - Controlla se questo IP ha già registrato nell'ultima ora
+        async function checkRateLimit(ipAddress) {
+            try {
+                const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                console.log('Checking rate limit for IP:', ipAddress);
+                
+                const { count, error } = await supabase
+                    .from('registrations')
+                    .select('*', { count: 'exact' })
+                    .eq('ip_address', ipAddress)
+                    .gte('created_at', oneHourAgo);
+
+                if (error) {
+                    console.error('Errore rate limiting:', error);
+                    return true; // Se errore, permetti comunque
+                }
+                
+                console.log('Registrazioni trovate da questo IP nell\'ultima ora:', count);
+                return (count || 0) < 1; // Se ha 0 registrazioni, permetti
+            } catch (error) {
+                console.error('Errore rate limiting:', error);
+                return true;
+            }
+        }
+
         function generateQRCode(ticketId) {
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = '';
@@ -461,6 +486,15 @@
             const recaptchaResponse = grecaptcha.getResponse();
             if (!recaptchaResponse) {
                 showError('Per favore, completa il CAPTCHA');
+                return;
+            }
+
+            // RATE LIMITING CHECK - PRIMA di tutto
+            console.log('Verificando rate limit per IP:', userIpAddress);
+            const canRegister = await checkRateLimit(userIpAddress || 'unknown');
+            if (!canRegister) {
+                showError('⏳ Hai già fatto una registrazione da questo IP. Riprova tra un\'ora.');
+                grecaptcha.reset();
                 return;
             }
 
