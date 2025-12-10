@@ -386,24 +386,35 @@
 
         // RATE LIMITING - Controlla se questo IP ha già registrato nell'ultima ora
         async function checkRateLimit(ipAddress) {
-            try {
-                const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-                
-                const { count, error } = await supabase
-                    .from('registrations')
-                    .select('*', { count: 'exact' })
-                    .eq('ip_address', ipAddress)
-                    .gte('created_at', oneHourAgo);
+    try {
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        console.log('Checking rate limit for IP:', ipAddress, 'from:', oneHourAgo);
+        
+        const { data, error } = await supabase
+            .from('registrations')
+            .select('id, created_at, ip_address')
+            .eq('ip_address', ipAddress)
+            .gte('created_at', oneHourAgo);
 
-                if (error) throw error;
-                
-                // Se ha già 1 registrazione nell'ultima ora, blocca
-                return (count || 0) < 1;
-            } catch (error) {
-                console.error('Errore rate limiting:', error);
-                return true; // Se errore, permetti comunque
-            }
+        if (error) {
+            console.error('Errore query rate limiting:', error);
+            return true;
         }
+        
+        const count = data ? data.length : 0;
+        console.log('Found registrations:', count, 'Data:', data);
+        
+        if (count > 0) {
+            console.log('BLOCKED - User already registered');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Errore rate limiting:', error);
+        return true;
+    }
+}
+
 
         window.addEventListener('DOMContentLoaded', () => {
             getUserIpAddress();
