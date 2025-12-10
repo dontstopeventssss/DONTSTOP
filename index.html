@@ -384,6 +384,27 @@
             }
         }
 
+        // RATE LIMITING - Controlla se questo IP ha già registrato nell'ultima ora
+        async function checkRateLimit(ipAddress) {
+            try {
+                const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                
+                const { count, error } = await supabase
+                    .from('registrations')
+                    .select('*', { count: 'exact' })
+                    .eq('ip_address', ipAddress)
+                    .gte('created_at', oneHourAgo);
+
+                if (error) throw error;
+                
+                // Se ha già 1 registrazione nell'ultima ora, blocca
+                return (count || 0) < 1;
+            } catch (error) {
+                console.error('Errore rate limiting:', error);
+                return true; // Se errore, permetti comunque
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             getUserIpAddress();
             loadLists();
@@ -467,6 +488,16 @@
             submitBtn.textContent = '⏳ Registrazione in corso...';
 
             try {
+                // RATE LIMITING CHECK
+                const canRegister = await checkRateLimit(userIpAddress || 'unknown');
+                if (!canRegister) {
+                    showError('⏳ Hai già fatto una registrazione da questo IP. Riprova tra un\'ora.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Genera QR Code';
+                    grecaptcha.reset();
+                    return;
+                }
+
                 const { data, error } = await supabase
                     .from('registrations')
                     .insert([{
